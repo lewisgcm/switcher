@@ -1,12 +1,23 @@
 /*global chrome*/
 
+const DEFAULT_BOOKMARK_ID = -1;
 const BOOKMARKS_BAR_FOLDER_ID = 1;
 const PROFILE_FOLDER_NAME = 'Switcher-Profiles';
 const PROFILE_NOT_FOUND = new Error('Could not find profile folder');
 
+// Gets the default bookmark id (this is a special profile, i.e the existing bookmark bar)
+export const getDefaultProfileId = () => {
+    return DEFAULT_BOOKMARK_ID;
+}
+
+// Set the active profile
+export const setActiveProfileId = (id) => {
+    localStorage.setItem('active_profile', id);
+}
+
 // Gets the active profile (or undefined)
-export const getActiveProfile = () => {
-    return localStorage.getItem('active_profile');
+export const getActiveProfileId = () => {
+    return localStorage.getItem('active_profile') || getDefaultProfileId();
 }
 
 // Get the profile folder (or return an error if we couldnt find it)
