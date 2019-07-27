@@ -1,27 +1,112 @@
+import { debug } from "./LogService";
+
 /*global chrome*/
 
-const DEFAULT_BOOKMARK_ID = -1;
-const BOOKMARKS_BAR_FOLDER_ID = 1;
+const DEFAULT_FOLDER_NAME = 'Default';
+const BOOKMARKS_BAR_FOLDER_ID = "1";
 const PROFILE_FOLDER_NAME = 'Switcher-Profiles';
 const PROFILE_NOT_FOUND = new Error('Could not find profile folder');
 
-// Gets the default bookmark id (this is a special profile, i.e the existing bookmark bar)
-export const getDefaultProfileId = () => {
-    return DEFAULT_BOOKMARK_ID;
-}
-
-// Set the active profile
-export const setActiveProfileId = (id) => {
-    localStorage.setItem('active_profile', id);
+// Basically we will create a default folder (for existing bookmarks bar items)
+const getDefaultProfileId = () => {
+    return new Promise((success, reject) => {
+        getOrCreateDefaultFolder().then(
+            (folder) => {
+                success(folder.id);
+            }
+        )
+    });
 }
 
 // Gets the active profile (or undefined)
 export const getActiveProfileId = () => {
-    return localStorage.getItem('active_profile') || getDefaultProfileId();
+    return new Promise((success, failure) => {
+        getDefaultProfileId().then(
+            (id) => {
+                success(localStorage.getItem('active_profile') || id);
+            }
+        );
+    });
+}
+
+// Set the active profile
+export const setActiveProfileId = (id) => {
+    getActiveProfileId().then(
+        (oldId) => {
+            localStorage.setItem('active_profile', id);
+
+            debug({
+                oldId,
+                id
+            });
+
+            chrome.bookmarks.getSubTree(
+                BOOKMARKS_BAR_FOLDER_ID,
+                (bookmarks) => {
+                    bookmarks[0].children.forEach(
+                        (b) => {
+                            chrome.bookmarks.move(
+                                b.id,
+                                { parentId: oldId },
+                                () => {
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+
+            chrome.bookmarks.getSubTree(
+                id,
+                (bookmarks) => {
+                    bookmarks[0].children.forEach(
+                        (b) => {
+                            chrome.bookmarks.move(
+                                b.id,
+                                { parentId: BOOKMARKS_BAR_FOLDER_ID },
+                                () => {
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        }
+    );
+}
+
+// Gets or creates the 'Default' profile folder
+const getOrCreateDefaultFolder = () => {
+    return new Promise(
+        (success, reject) => {
+            getOrCreateProfileFolder().then(
+                (folder) => {
+                    chrome.bookmarks.getSubTree(folder.id, (subtree) => {
+                        const children = subtree[0].children;
+                        const defaultFolder = (children || []).filter((i) => i.title == DEFAULT_FOLDER_NAME);
+    
+                        if ( defaultFolder && defaultFolder.length > 0 ) {
+                            success( defaultFolder && defaultFolder[0] );
+                        } else {
+                            chrome.bookmarks.create(
+                                {
+                                    parentId: folder.id,
+                                    title: DEFAULT_FOLDER_NAME,
+                                },
+                                (folder) => {
+                                    success(folder);
+                                }
+                            );
+                        }
+                    });
+                }
+            )
+        }
+    )
 }
 
 // Get the profile folder (or return an error if we couldnt find it)
-export const getProfileFolder = () => {
+const getProfileFolder = () => {
     return new Promise(
         (success, reject) => {
             chrome.bookmarks.search({ title: PROFILE_FOLDER_NAME }, function (results) {
@@ -69,7 +154,7 @@ export const getOrCreateProfileFolder = () => {
 export const getProfiles = () => {
     return new Promise(
         (success, reject) => {
-            getProfileFolder().then(
+            getOrCreateProfileFolder().then(
                 (folder) => {
                     chrome.bookmarks.getSubTree(folder.id, (folders) => {
                         success(folders[0].children);

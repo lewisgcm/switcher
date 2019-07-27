@@ -5,7 +5,7 @@ import CreateProfile from './profile/CreateProfile';
 import SwitchProfile from './profile/SwitchProfile';
 import Octicon, { Zap } from '@primer/octicons-react'
 
-import { createProfile, getProfiles, getDefaultProfileId, getActiveProfileId, setActiveProfileId } from '../services/BookmarksService';
+import { createProfile, getProfiles, getActiveProfileId, setActiveProfileId } from '../services/BookmarksService';
 import { debug } from '../services/LogService';
 
 import './App.css';
@@ -15,19 +15,21 @@ class App extends React.Component {
         super(props);
         this.state = {
             profiles: [],
-            selectedProfileId: getDefaultProfileId()
+            selectedProfileId: 0,
         };
     }
 
     componentDidMount() {
-        this.setState({
-            selectedProfileId: getActiveProfileId(),
-        });
+        getActiveProfileId().then(
+            (id) => {
+                this.setState({
+                    selectedProfileId: id,
+                });
 
-        getProfiles().then(
+                return getProfiles();
+            }
+        ).then(
             (folders) => {
-                debug(folders);
-
                 this.setState({
                     profiles: folders,
                 });
@@ -56,7 +58,9 @@ class App extends React.Component {
     }
 
     onSwitch() {
-        setActiveProfileId(this.state.selectedProfileId);
+        setActiveProfileId(
+            this.state.selectedProfileId
+        );
     }
 
     render() {
@@ -67,7 +71,8 @@ class App extends React.Component {
                     selectedProfileId={this.state.selectedProfileId}
                     onProfileSelect={(e)=>{ this.setState({selectedProfileId: e}); }}>
                 </SwitchProfile>
-                <button onClick={(e) => {this.onSwitch()}} disabled={this.state.profiles.length == 0}>
+                <button onClick={(e) => {this.onSwitch()}}
+                    disabled={this.state.profiles.length == 0}>
                     Switch
                     <Octicon icon={Zap} size='small' ariaLabel='Switch' />
                 </button>
