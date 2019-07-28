@@ -166,8 +166,14 @@ export class BookmarkService {
 					this._profileIdExists(lastActiveId).then(
 						(valid) => {
 							if (valid) {
+								this.logger.debug({
+									activeId: lastActiveId
+								});
 								success(lastActiveId);
 							} else {
+								this.logger.debug({
+									activeId: id
+								});
 								success(id);
 							}
 						}
@@ -182,7 +188,15 @@ export class BookmarkService {
 		return new Promise((success, reject) => {
 			this.getActiveProfileId().then(
 				(oldId) => {
+					this.logger.debug({
+						id,
+						oldId
+					});
 					this.localStorage.setItem('active_profile', id);
+
+					if( id === oldId ) {
+						return success();
+					}
 
 					this._moveAll(BOOKMARKS_BAR_FOLDER_ID, oldId).then(
 						() => {
@@ -205,6 +219,9 @@ export class BookmarkService {
 				this._getOrCreateProfileFolder().then(
 					(folder) => {
 						this.chrome.bookmarks.getSubTree(folder.id, (folders) => {
+							this.logger.debug({
+								profiles: folders[0].children
+							});
 							success(folders[0].children);
 						});
 					}

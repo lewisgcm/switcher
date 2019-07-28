@@ -1,84 +1,30 @@
-/*global chrome*/
-
 import React from 'react';
-import CreateProfile from './profile/CreateProfile';
-import SwitchProfile from './profile/SwitchProfile';
-import Octicon, { Zap } from '@primer/octicons-react'
+import { connect } from 'react-redux';
 
-import { createProfile, getProfiles, getActiveProfileId, setActiveProfileId } from '../services/BookmarkService';
-import { debug } from '../services/LogService';
+import { getActiveProfileIdAndProfiles } from '../actions/index';
+import CreateProfile from '../containers/CreateProfile';
+import SwitchProfile from '../containers/SwitchProfile';
 
 import './App.css';
 
 class App extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            profiles: [],
-            selectedProfileId: 0,
-        };
-    }
+	componentDidMount() {
+		this.props.didMount();
+	}
 
-    componentDidMount() {
-        getActiveProfileId().then(
-            (id) => {
-                this.setState({
-                    selectedProfileId: id,
-                });
-
-                return getProfiles();
-            }
-        ).then(
-            (folders) => {
-                this.setState({
-                    profiles: folders,
-                });
-            }
-        ).catch((e) => {
-            debug(e);
-        });
-    }
-
-    onCreateProfile(name) {
-        createProfile(name).then(
-            () => {
-                getProfiles().then(
-                    (folders) => {
-                        this.setState({
-                            profiles: folders,
-                        });
-                    }
-                ).catch((e) => {
-                    debug(e);
-                })
-            }
-        ).catch((e) => {
-            debug(e);
-        });
-    }
-
-    onSwitch() {
-        setActiveProfileId(
-            this.state.selectedProfileId
-        );
-    }
-
-    render() {
-        return (
-            <div>
-                <CreateProfile onCreate={(e)=> {this.onCreateProfile(e)}}></CreateProfile>
-                <SwitchProfile profiles={this.state.profiles}
-                    selectedProfileId={this.state.selectedProfileId}
-                    onProfileSelect={(e)=>{ this.setState({selectedProfileId: e}); }}>
-                </SwitchProfile>
-                <button onClick={(e) => {this.onSwitch()}}
-                    disabled={this.state.profiles.length == 0}>
-                    Switch
-                    <Octicon icon={Zap} size='small' ariaLabel='Switch' />
-                </button>
-            </div>
-        );
-    }
+	render() {
+		return (
+			<div>
+				<CreateProfile></CreateProfile>
+				<SwitchProfile></SwitchProfile>
+			</div>
+		);
+	}
 }
 
-export default App;
+export default connect(
+	null,
+	(dispatch) => ({
+		didMount: () => dispatch(getActiveProfileIdAndProfiles())
+	})
+)(App);

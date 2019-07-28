@@ -6,6 +6,6 @@ export class LogService {
 	}
 
 	debug(message) {
-		chrome.extension.getBackgroundPage().console.log(message);
+		this.chrome.extension.getBackgroundPage().console.log(message);
 	}
 }

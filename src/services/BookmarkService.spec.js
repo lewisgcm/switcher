@@ -1,10 +1,16 @@
 import sinon from 'sinon';
 import chrome from 'sinon-chrome';
 
+import { LogService } from './LogService';
 import { BookmarkService, PROFILE_FOLDER_NAME, DEFAULT_FOLDER_NAME, BOOKMARKS_BAR_FOLDER_ID } from './BookmarkService';
 
 beforeEach(() => {
 	chrome.flush();
+	chrome.extension.getBackgroundPage.returns({
+		console: {
+			log: sinon.fake.returns()
+		}
+	})
 });
 
 /**
@@ -35,6 +41,7 @@ it('getProfiles: should return profiles from the profiles bookmarks folder', () 
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.getProfiles().then(
@@ -81,6 +88,7 @@ it('getProfiles: should create the bookmarks profile folder and return an empty 
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.getProfiles().then(
@@ -140,6 +148,7 @@ it('getActiveProfileId: should create the profile and default folders if they do
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.getActiveProfileId().then(
@@ -183,6 +192,7 @@ it('getActiveProfileId: should return the default profile id if the last active 
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.getActiveProfileId().then(
@@ -230,6 +240,7 @@ it('getActiveProfileId: should return the last active valid profile id', () => {
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.getActiveProfileId().then(
@@ -280,6 +291,7 @@ it('createProfile: should create the profile bookmarks folder if it does not exi
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.createProfile(newProfileTitle).then(
@@ -325,6 +337,7 @@ it('createProfile: should create the new profile in the profile bookmarks folder
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.createProfile(newProfileTitle).then(
@@ -395,6 +408,7 @@ it('setActiveProfileId: should move bookmarks from the bookmarks bar to the old 
 	const service = new BookmarkService(
 		chrome,
 		localStorage,
+		new LogService(chrome)
 	);
 
 	return service.setActiveProfileId(newProfileId).then(
@@ -405,6 +419,72 @@ it('setActiveProfileId: should move bookmarks from the bookmarks bar to the old 
 			// Check we actually moved the bookmarks
 			expect(chrome.bookmarks.move.withArgs("10", sinon.match({ parentId: oldProfileId })).calledOnce).toBe(true);
 			expect(chrome.bookmarks.move.withArgs("11", sinon.match({ parentId: BOOKMARKS_BAR_FOLDER_ID })).calledOnce).toBe(true);
+		}
+	)
+});
+
+/**
+ * This should:
+ * * Not move any bookmarks
+ */
+it('setActiveProfileId: should not move any bookmarks as the user is attempting to swap with the same profile', () => {
+	const oldProfileId = "6";
+	const newProfileId = "6";
+	const localStorage = {
+		getItem: () => oldProfileId,
+		setItem: sinon.stub().returns(true)
+	}
+
+	chrome.bookmarks.search
+		.withArgs(sinon.match({ title: PROFILE_FOLDER_NAME }))
+		.yields([{
+			id: "5",
+			title: PROFILE_FOLDER_NAME,
+		}]);
+
+	// This is the bookmarks bar bookmarks, these should be moved to the old profile id 
+	chrome.bookmarks.getSubTree
+		.withArgs(BOOKMARKS_BAR_FOLDER_ID)
+		.yields([{children:[{
+			id: "10",
+			title: "A"
+		}]}]);
+
+	chrome.bookmarks.move.yields(true);
+
+	// This is the new profile bookmarks, these should be moved to the bookmarks bar
+	chrome.bookmarks.getSubTree
+		.withArgs(newProfileId)
+		.yields([{children:[{
+			id: "11",
+			title: "B"
+		}]}]);
+
+	chrome.bookmarks.getSubTree
+		.withArgs("5")
+		.yields([{
+			children: [
+				{
+					id: oldProfileId,
+					title: DEFAULT_FOLDER_NAME,
+					parentId: "5",
+				},
+			]
+		}]);
+
+	const service = new BookmarkService(
+		chrome,
+		localStorage,
+		new LogService(chrome)
+	);
+
+	return service.setActiveProfileId(newProfileId).then(
+		() => {
+			// Check we updated the active profile
+			expect(localStorage.setItem.withArgs('active_profile', newProfileId).calledOnce).toBe(true);
+
+			// Check we actually moved the bookmarks
+			expect(chrome.bookmarks.move.called).toBe(false);
 		}
 	)
 });
