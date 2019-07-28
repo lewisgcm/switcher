@@ -1,5 +1,11 @@
-/*global chrome*/
+export class LogService {
+	chrome = undefined;
 
-export const debug = (log) => {
-    chrome.extension.getBackgroundPage().console.log(log);
+	constructor(chrome) {
+		this.chrome = chrome;
+	}
+
+	debug(message) {
+		chrome.extension.getBackgroundPage().console.log(message);
+	}
 }

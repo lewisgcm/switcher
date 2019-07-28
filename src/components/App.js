@@ -5,7 +5,7 @@ import CreateProfile from './profile/CreateProfile';
 import SwitchProfile from './profile/SwitchProfile';
 import Octicon, { Zap } from '@primer/octicons-react'
 
-import { createProfile, getProfiles, getActiveProfileId, setActiveProfileId } from '../services/BookmarksService';
+import { createProfile, getProfiles, getActiveProfileId, setActiveProfileId } from '../services/BookmarkService';
 import { debug } from '../services/LogService';
 
 import './App.css';
