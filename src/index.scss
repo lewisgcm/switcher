@@ -1,7 +1,7 @@
 html,
 body {
     width: 256px;
-	height: 141px;
+	height: 137px;
 }
 
 @import "~bootswatch/dist/flatly/variables";
@@ -21,5 +21,8 @@ h5 {
     margin: 0px;
     padding-left: 5px;
     padding-top: 5px;
-    padding-bottom: 5px;
+	padding-bottom: 5px;
+	
+	color: white;
+	background-color: lighten(theme-color("primary"), 5%);
 }

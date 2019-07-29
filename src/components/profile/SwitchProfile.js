@@ -37,7 +37,7 @@ class SwitchProfile extends React.Component {
 					<div className="input-group-append">
 						<button onClick={(e) => { this.props.onSwitch(this.state.selectedProfileId) }}
 							disabled={this.props.profiles.length == 0}
-							className="btn btn-primary" >
+							className="btn btn-secondary" >
 							<Octicon icon={Zap} size='small' ariaLabel='Switch' />
 						</button>
 					</div>

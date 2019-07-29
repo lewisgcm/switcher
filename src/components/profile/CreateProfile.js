@@ -21,7 +21,7 @@ class CreateProfile extends React.Component {
 		return (
 			<div>
 				<h5>Create Profile</h5>
-				<div className="input-group mb-1">
+				<div className="input-group">
 					<input type="text"
 						className="form-control"
 						onKeyUp={(e) => { this.setState({ name: e.target.value }) }}
@@ -29,7 +29,7 @@ class CreateProfile extends React.Component {
 						ref="inputBox">
 					</input>
 					<div className="input-group-append">
-						<button onClick={(e) => this.onButtonClick()} className="btn btn-primary">
+						<button onClick={(e) => this.onButtonClick()} className="btn btn-secondary">
 							<Octicon icon={Plus} size='small' ariaLabel='GitHub' />
 						</button>
 					</div>

@@ -5,8 +5,6 @@ import { getActiveProfileIdAndProfiles } from '../actions/index';
 import CreateProfile from '../containers/CreateProfile';
 import SwitchProfile from '../containers/SwitchProfile';
 
-import './App.css';
-
 class App extends React.Component {
 	componentDidMount() {
 		this.props.didMount();
